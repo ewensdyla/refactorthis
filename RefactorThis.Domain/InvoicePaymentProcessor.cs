@@ -24,7 +24,14 @@ namespace RefactorThis.Domain
 				throw new InvalidOperationException( "There is no invoice matching this payment" );
 			}
 			
-			if ( inv.AmountRemaining == 0 ) 
+			
+			if ( inv.TotalAmount < 0 )
+			{
+				throw new InvalidOperationException( "The invoice is in an invalid state, it has an amount less than 0." );
+			}
+			
+			//Check if $0 invoice has received payments.
+			if ( inv.TotalAmount == 0 ) 
 			{
 					if ( inv.PaymentsMade == null || !inv.PaymentsMade.Any( ) )
 					{
@@ -39,17 +46,17 @@ namespace RefactorThis.Domain
 			{
 				if ( inv.PaymentsMade != null && inv.PaymentsMade.Any( ) )
 				{
-					if ( inv.PaymentsMade.Sum( x => x.Amount ) != 0 && inv.AmountRemaining == inv.PaymentsMade.Sum( x => x.Amount ) )
+					if ( inv.RemainingBalance() != 0 && inv.TotalAmount == inv.RemainingBalance() ) 
 					{
 						responseMessage = "invoice was already fully paid";
 					}
-					else if ( inv.PaymentsMade.Sum( x => x.Amount ) != 0 && payment.Amount > ( inv.AmountRemaining - inv.AmountPaid ) )
+					else if ( inv.PaymentsMade.Sum( x => x.Amount ) != 0 && payment.Amount > ( inv.TotalAmount - inv.AmountPaid ) )
 					{
 						responseMessage = "the payment is greater than the partial amount remaining";
 					}
 					else
 					{
-						if ( ( inv.AmountRemaining - inv.AmountPaid ) == payment.Amount )
+						if ( ( inv.TotalAmount - inv.AmountPaid ) == payment.Amount )
 						{
 							inv.AmountPaid += payment.Amount;
 							inv.PaymentsMade.Add( payment );
@@ -65,11 +72,11 @@ namespace RefactorThis.Domain
 				}
 				else
 				{
-					if ( payment.Amount > inv.AmountRemaining )
+					if ( payment.Amount > inv.TotalAmount )
 					{
 						responseMessage = "the payment is greater than the invoice amount";
 					}
-					else if ( inv.AmountRemaining == payment.Amount )
+					else if ( inv.TotalAmount == payment.Amount )
 					{
 						inv.AmountPaid = payment.Amount;
 						inv.PaymentsMade.Add( payment );

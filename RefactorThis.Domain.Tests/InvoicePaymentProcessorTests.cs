@@ -38,7 +38,7 @@ namespace RefactorThis.Domain.Tests
 
 			var invoice = new Invoice( repo )
 			{
-				AmountRemaining = 0,
+				TotalAmount = 0,
 				AmountPaid = 0,
 				PaymentsMade = null
 			};
@@ -61,7 +61,7 @@ namespace RefactorThis.Domain.Tests
 
 			var invoice = new Invoice( repo )
 			{
-				AmountRemaining = 10,
+				TotalAmount = 10,
 				AmountPaid = 10,
 				PaymentsMade = new List<Payment>
 				{
@@ -88,7 +88,7 @@ namespace RefactorThis.Domain.Tests
 			var repo = new InvoiceRepository( );
 			var invoice = new Invoice( repo )
 			{
-				AmountRemaining = 10,
+				TotalAmount = 10,
 				AmountPaid = 5,
 				PaymentsMade = new List<Payment>
 				{
@@ -118,7 +118,7 @@ namespace RefactorThis.Domain.Tests
 			var repo = new InvoiceRepository( );
 			var invoice = new Invoice( repo )
 			{
-				AmountRemaining = 5,
+				TotalAmount = 5,
 				AmountPaid = 0,
 				PaymentsMade = new List<Payment>( )
 			};
@@ -142,7 +142,7 @@ namespace RefactorThis.Domain.Tests
 			var repo = new InvoiceRepository( );
 			var invoice = new Invoice( repo )
 			{
-				AmountRemaining = 10,
+				TotalAmount = 10,
 				AmountPaid = 5,
 				
 				PaymentsMade = new List<Payment>
@@ -173,7 +173,7 @@ namespace RefactorThis.Domain.Tests
 			var repo = new InvoiceRepository( );
 			var invoice = new Invoice( repo )
 			{
-				AmountRemaining = 10,
+				TotalAmount = 10,
 				AmountPaid = 0,
 				PaymentsMade = new List<Payment>( ) { new Payment( ) { Amount = 10 } }
 			};
@@ -197,7 +197,7 @@ namespace RefactorThis.Domain.Tests
 			var repo = new InvoiceRepository( );
 			var invoice = new Invoice( repo )
 			{
-				AmountRemaining = 10,
+				TotalAmount = 10,
 				AmountPaid = 5,
 				PaymentsMade = new List<Payment>
 				{
@@ -227,7 +227,7 @@ namespace RefactorThis.Domain.Tests
 			var repo = new InvoiceRepository( );
 			var invoice = new Invoice( repo )
 			{
-				AmountRemaining = 10,
+				TotalAmount = 10,
 				AmountPaid = 0,
 				PaymentsMade = new List<Payment>( )
 			};

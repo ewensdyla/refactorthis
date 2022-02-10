@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RefactorThis.Persistence
 {
@@ -15,9 +16,15 @@ namespace RefactorThis.Persistence
 			_repository.SaveInvoice( this );
 		}
 
-		public decimal AmountRemaining { get; set; }
+		public decimal TotalAmount { get; set; }
 		public decimal AmountPaid { get; set; }
 		public List<Payment> PaymentsMade { get; set; }
+
+		public decimal RemainingBalance()
+		{
+			var remainingAmount = PaymentsMade.Sum(x => x.Amount);
+			return remainingAmount;
+		}
 
 	}
 }
