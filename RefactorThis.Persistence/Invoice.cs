@@ -15,8 +15,9 @@ namespace RefactorThis.Persistence
 			_repository.SaveInvoice( this );
 		}
 
-		public decimal Amount { get; set; }
+		public decimal AmountRemaining { get; set; }
 		public decimal AmountPaid { get; set; }
-		public List<Payment> Payments { get; set; }
+		public List<Payment> PaymentsMade { get; set; }
+
 	}
 }
