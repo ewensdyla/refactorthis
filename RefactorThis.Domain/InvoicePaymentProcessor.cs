@@ -13,78 +13,77 @@ namespace RefactorThis.Domain
 			_invoiceRepository = invoiceRepository;
 		}
 
+		private void SafetyChecks ( Invoice invoice, Payment payment )
+		{
+			if ( invoice == null )
+			{
+				throw new InvalidOperationException( "There is no invoice matching this payment" );
+			}
+			
+			if ( invoice.TotalAmount < 0 )
+			{
+				throw new InvalidOperationException( "The invoice is in an invalid state, it has an amount less than 0." );
+			}
+
+			if ( payment == null )
+			{
+				throw new InvalidOperationException( "Critical error, payment is null" );
+			}
+			
+			if ( payment.Amount <= 0 )
+			{
+				throw new InvalidOperationException( "Critical error, payment must have a value" );
+			}
+		}
+
+		private string ReceivePayment(Payment payment, Invoice invoice )
+		{
+			var responseMessage = "";
+
+			if (invoice.RemainingBalance() == 0)
+			{
+				return "invoice was already fully paid";
+			}
+			
+			if ( invoice.RemainingBalance() < payment.Amount )
+			{
+				return "the payment is greater than the invoice amount, you owe $" + invoice.RemainingBalance();
+			}
+
+			var remainingAmount = invoice.AddPayment(payment);
+
+			if ( remainingAmount == 0 )
+			{
+				responseMessage = "invoice is now fully paid";
+			}
+			else
+			{
+				responseMessage = "invoice has been paid. There is still $" + remainingAmount + " owing";
+			}
+			
+			return responseMessage;
+		}
+
 		public string ProcessPayment( Payment payment )
 		{
 			var inv = _invoiceRepository.GetInvoice( payment.Reference );
 
-			var responseMessage = string.Empty;
-
-			if ( inv == null )
+			SafetyChecks(inv, payment);
+			
+			//Check if $0 invoice has received payments.
+			if ( inv.TotalAmount == 0 ) 
 			{
-				throw new InvalidOperationException( "There is no invoice matching this payment" );
-			}
-			else
-			{
-				if ( inv.Amount == 0 )
-				{
-					if ( inv.Payments == null || !inv.Payments.Any( ) )
+					if ( !inv.PaymentsMade.Any( ) )
 					{
-						responseMessage = "no payment needed";
+						return "no payment needed";
 					}
 					else
 					{
 						throw new InvalidOperationException( "The invoice is in an invalid state, it has an amount of 0 and it has payments." );
 					}
-				}
-				else
-				{
-					if ( inv.Payments != null && inv.Payments.Any( ) )
-					{
-						if ( inv.Payments.Sum( x => x.Amount ) != 0 && inv.Amount == inv.Payments.Sum( x => x.Amount ) )
-						{
-							responseMessage = "invoice was already fully paid";
-						}
-						else if ( inv.Payments.Sum( x => x.Amount ) != 0 && payment.Amount > ( inv.Amount - inv.AmountPaid ) )
-						{
-							responseMessage = "the payment is greater than the partial amount remaining";
-						}
-						else
-						{
-							if ( ( inv.Amount - inv.AmountPaid ) == payment.Amount )
-							{
-								inv.AmountPaid += payment.Amount;
-								inv.Payments.Add( payment );
-								responseMessage = "final partial payment received, invoice is now fully paid";
-							}
-							else
-							{
-								inv.AmountPaid += payment.Amount;
-								inv.Payments.Add( payment );
-								responseMessage = "another partial payment received, still not fully paid";
-							}
-						}
-					}
-					else
-					{
-						if ( payment.Amount > inv.Amount )
-						{
-							responseMessage = "the payment is greater than the invoice amount";
-						}
-						else if ( inv.Amount == payment.Amount )
-						{
-							inv.AmountPaid = payment.Amount;
-							inv.Payments.Add( payment );
-							responseMessage = "invoice is now fully paid";
-						}
-						else
-						{
-							inv.AmountPaid = payment.Amount;
-							inv.Payments.Add( payment );
-							responseMessage = "invoice is now partially paid";
-						}
-					}
-				}
 			}
+
+			var responseMessage = ReceivePayment(payment, inv);
 			
 			inv.Save();
 
