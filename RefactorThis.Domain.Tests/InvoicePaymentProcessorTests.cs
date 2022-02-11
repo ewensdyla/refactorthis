@@ -9,7 +9,7 @@ namespace RefactorThis.Domain.Tests
 	public class InvoicePaymentProcessorTests
 	{
 		[Test]
-		public void ProcessPayment_Should_ThrowException_When_NoInoiceFoundForPaymentReference( )
+		public void ProcessPayment_Should_ThrowException_When_NoInvoiceFoundForPaymentReference( )
 		{
 			var repo = new InvoiceRepository( );
 
@@ -40,14 +40,17 @@ namespace RefactorThis.Domain.Tests
 			{
 				TotalAmount = 0,
 				AmountPaid = 0,
-				PaymentsMade = null
 			};
 
 			repo.Add( invoice );
 
 			var paymentProcessor = new InvoicePaymentProcessor( repo );
 
-			var payment = new Payment( );
+			var payment = new Payment
+				{
+					Amount = 10
+				}
+				;
 
 			var result = paymentProcessor.ProcessPayment( payment );
 
@@ -62,20 +65,20 @@ namespace RefactorThis.Domain.Tests
 			var invoice = new Invoice( repo )
 			{
 				TotalAmount = 10,
-				AmountPaid = 10,
-				PaymentsMade = new List<Payment>
-				{
-					new Payment
-					{
-						Amount = 10
-					}
-				}
+				AmountPaid = 0,
 			};
+			invoice.AddPayment(new Payment
+			{
+				Amount = 10
+			});
 			repo.Add( invoice );
 
 			var paymentProcessor = new InvoicePaymentProcessor( repo );
 
-			var payment = new Payment( );
+			var payment = new Payment
+			{
+				Amount = 10
+			};
 
 			var result = paymentProcessor.ProcessPayment( payment );
 
@@ -89,27 +92,25 @@ namespace RefactorThis.Domain.Tests
 			var invoice = new Invoice( repo )
 			{
 				TotalAmount = 10,
-				AmountPaid = 5,
-				PaymentsMade = new List<Payment>
-				{
-					new Payment
-					{
-						Amount = 5
-					}
-				}
+				AmountPaid = 0,
 			};
+			invoice.AddPayment(new Payment
+			{
+				Amount = 5
+			});
+
 			repo.Add( invoice );
 
 			var paymentProcessor = new InvoicePaymentProcessor( repo );
 
-			var payment = new Payment( )
+			var payment = new Payment
 			{
 				Amount = 6
 			};
 
 			var result = paymentProcessor.ProcessPayment( payment );
 
-			Assert.AreEqual( "the payment is greater than the partial amount remaining", result );
+			Assert.AreEqual( "the payment is greater than the invoice amount, you owe $5", result );
 		}
 
 		[Test]
@@ -120,20 +121,19 @@ namespace RefactorThis.Domain.Tests
 			{
 				TotalAmount = 5,
 				AmountPaid = 0,
-				PaymentsMade = new List<Payment>( )
 			};
 			repo.Add( invoice );
 
 			var paymentProcessor = new InvoicePaymentProcessor( repo );
 
-			var payment = new Payment( )
+			var payment = new Payment
 			{
 				Amount = 6
 			};
 
 			var result = paymentProcessor.ProcessPayment( payment );
 
-			Assert.AreEqual( "the payment is greater than the invoice amount", result );
+			Assert.AreEqual( "the payment is greater than the invoice amount, you owe $5", result );
 		}
 
 		[Test]
@@ -143,16 +143,12 @@ namespace RefactorThis.Domain.Tests
 			var invoice = new Invoice( repo )
 			{
 				TotalAmount = 10,
-				AmountPaid = 5,
-				
-				PaymentsMade = new List<Payment>
-				{
-					new Payment
-					{
-						Amount = 5
-					}
-				}
+				AmountPaid = 0,
 			};
+			invoice.AddPayment(new Payment
+			{
+				Amount = 5
+			});
 			repo.Add( invoice );
 
 			var paymentProcessor = new InvoicePaymentProcessor( repo );
@@ -164,7 +160,7 @@ namespace RefactorThis.Domain.Tests
 
 			var result = paymentProcessor.ProcessPayment( payment );
 
-			Assert.AreEqual( "final partial payment received, invoice is now fully paid", result );
+			Assert.AreEqual( "invoice is now fully paid", result );
 		}
 
 		[Test]
@@ -175,13 +171,16 @@ namespace RefactorThis.Domain.Tests
 			{
 				TotalAmount = 10,
 				AmountPaid = 0,
-				PaymentsMade = new List<Payment>( ) { new Payment( ) { Amount = 10 } }
 			};
+			invoice.AddPayment(new Payment
+			{
+				Amount = 10
+			});
 			repo.Add( invoice );
 
 			var paymentProcessor = new InvoicePaymentProcessor( repo );
 
-			var payment = new Payment( )
+			var payment = new Payment
 			{
 				Amount = 10
 			};
@@ -198,27 +197,24 @@ namespace RefactorThis.Domain.Tests
 			var invoice = new Invoice( repo )
 			{
 				TotalAmount = 10,
-				AmountPaid = 5,
-				PaymentsMade = new List<Payment>
-				{
-					new Payment
-					{
-						Amount = 5
-					}
-				}
+				AmountPaid = 0,
 			};
+			invoice.AddPayment(new Payment
+			{
+				Amount = 5
+			});
 			repo.Add( invoice );
 
 			var paymentProcessor = new InvoicePaymentProcessor( repo );
 
-			var payment = new Payment( )
+			var payment = new Payment
 			{
 				Amount = 1
 			};
 
 			var result = paymentProcessor.ProcessPayment( payment );
 
-			Assert.AreEqual( "another partial payment received, still not fully paid", result );
+			Assert.AreEqual( "invoice has been paid. There is still $4 owing", result );
 		}
 
 		[Test]
@@ -229,20 +225,46 @@ namespace RefactorThis.Domain.Tests
 			{
 				TotalAmount = 10,
 				AmountPaid = 0,
-				PaymentsMade = new List<Payment>( )
 			};
 			repo.Add( invoice );
 
 			var paymentProcessor = new InvoicePaymentProcessor( repo );
 
-			var payment = new Payment( )
+			var payment = new Payment
 			{
 				Amount = 1
 			};
 
 			var result = paymentProcessor.ProcessPayment( payment );
 
-			Assert.AreEqual( "invoice is now partially paid", result );
+			Assert.AreEqual( "invoice has been paid. There is still $9 owing", result );
+		}
+		
+		[Test]
+		public void ProcessPayment_Should_ThrowException_When_InvalidPaymentIsReceived( )
+		{
+			var repo = new InvoiceRepository( );
+			var invoice = new Invoice( repo )
+			{
+				TotalAmount = 10,
+				AmountPaid = 0,
+			};
+			repo.Add( invoice );
+
+			var paymentProcessor = new InvoicePaymentProcessor( repo );
+			var failureMessage = "";
+			var payment = new Payment();
+
+			try
+			{
+				var result = paymentProcessor.ProcessPayment( payment );
+			}
+			catch ( InvalidOperationException e )
+			{
+				failureMessage = e.Message;
+			}
+
+			Assert.AreEqual( "Critical error, payment must have a value", failureMessage );
 		}
 	}
 }
